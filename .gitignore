@@ -1,0 +1,6 @@
+.DS_Store
+*.png
+*.jpg
+package-lock.json.
+node_modules
+temp

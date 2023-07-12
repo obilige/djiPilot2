@@ -1,0 +1,112 @@
+version: "3"
+services:
+  pilot2sample:
+    build: ./sample
+    image: sinto-pilot2-sample
+    networks:
+      - full_default
+    volumes:
+      - ./sample/app.js:/app/app.js
+
+  # 개발중인 프론트
+  pilot2front:
+    build:
+      context: ./CloudAPI/cloudfront
+    image: sinto-pilot2-front
+    external_links:
+      - ~/mp/docker-compose.yml:webgateway
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./CloudAPI/cloudfront:/home/cloudfront
+    networks:
+      - full_default
+    platform: linux/amd64
+
+  # 개발중인 백엔드
+  pilot2back:
+    build: ./CloudAPI
+    image: sinto-pilot2-back
+    depends_on:
+      - emqx-broker
+    volumes:
+      - ./CloudAPI/source:/home/pilot/source
+    restart: "always"
+    networks:
+      - full_default
+    platform: linux/amd64
+
+  emqx-broker:
+    image: emqx:4.4
+    ports:
+      - "18083:18083"
+    environment:
+      - EMQX_ALLOW_ANONYMOUS=true
+    networks:
+      - full_default
+
+  ome:
+    image: airensoft/ovenmediaengine:latest
+    ports:
+      - 1935:1935
+      - 9999:9999/udp
+      # - 9000:9000
+      - 3333:3333
+      - 3478:3478                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+      - 10000-10009:10000-10009/udp
+    environment:
+      - OME_HOST_IP=211.189.132.21
+    networks:
+      - full_default
+
+  ovenplayer:
+    image: airensoft/ovenplayerdemo:latest
+    ports:
+      - 8090:80
+    networks:
+      - full_default
+    platform: linux/amd64
+
+  minio:
+    image: minio/minio
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER : team3
+      MINIO_ROOT_PASSWORD: visumy00
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./minio/data:/data
+    networks:
+      - full_default
+    platform: linux/amd64
+
+networks:
+  full_default:
+    external: true
+
+
+
+
+  # # 불필요하다 판단해 제거한 컨테이너
+  # mavic3m-front:
+  #   image: dji/nginx:latest
+  #   networks:
+  #     - full_default
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime
+  #     - ./source/nginx/nginx.conf:/etc/nginx/nginx.conf
+
+  # redis:
+  #   image: redis:6.2
+  #   restart: "always"
+  #   hostname: mavic3m_redis
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - full_default 
+  #   command:
+  #     redis-server
