@@ -3,14 +3,14 @@ import urllib3
 
 
 class OSS:
-    def __init__(self):
+    def __init__(self, server, port, access_key, secret_key, region, bucket):
         # config
-        self.server = "minio"
-        self.port = "9000"
-        self.access_key = ""
-        self.secret_key = ""
-        self.region = ""
-        self.bucket = ""
+        self.server = server
+        self.port = port
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.region = region
+        self.bucket = bucket
 
     def oss(self):
         try:

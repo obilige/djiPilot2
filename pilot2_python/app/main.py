@@ -1,6 +1,6 @@
 from typing import Union
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from route import manage, wayline
+from route import manage, wayline, storage
 from fastapi.responses import HTMLResponse
 
 app = FastAPI()
@@ -8,6 +8,7 @@ app = FastAPI()
 # http(api)
 app.include_router(manage.router)
 app.include_router(wayline.router)
+app.include_router(storage.router)
 
 
 @app.get("/back")

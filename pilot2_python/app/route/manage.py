@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from ..dependencies import get_token_header
-from utility.postgres import postgres  as db
+from utility.postgres import postgres as db
 import json
 
 router = APIRouter(
@@ -17,7 +17,7 @@ user_id = "be7c6c3d-afe9-4be4-b9eb-c55066c0914e"
 
 
 @router.get("/")
-async def hello():
+def hello():
     result = {"code": 0, "message": "connection to manage is success", "data":""}
     return result
 
@@ -31,9 +31,9 @@ async def login(item):
     row = await db.login(id)
 
     if row.account_id == False or row.account_id != id: 
-        result = {} # fail
+        result = {"code": 500, "message": "아이디/비밀번호를 틀렸습니다.", "data":""} # fail
     elif row.password != password:
-        result = {} # fail
+        result = {"code": 500, "message": "아이디/비밀번호를 틀렸습니다.", "data":""} # fail
     else:
         # for test
         data = {
@@ -52,19 +52,37 @@ async def login(item):
 
 @router.get('/workspaces/current')
 def current_data():
+    '''로그인한 workspace에 대한 정보'''
     data = db.current_data()
     result = {"code": 0, "message": "success", "data": data}
     return json.load(result)
 
 @router.get('/users/current')
 def user_data():
-    data = db.user_data()
+    '''
+    1. 로그인한 유저에 대한 정보
+    2. 사용한 컨트롤러가 접속해야할 mqtt broker 경로 정보 전달
+    '''
+    data = db.remote.user_data()
     result = {"code": 0, "message": "success", "data": data}
     return json.load(result)
 
-# 샘플 프론트 화면에서 장비 리스트를 표출하기 위해 데이터 요청
+
+@router.get('/users/{workspace_id}/users')
+async def users_data(workspace_id):
+    '''
+    프론트 화면에 뿌려줄 사용자 정보
+    '''
+    data = await db.users_data()
+    result = {"code": 0, "message": "success", "data": data}
+    return json.load(result)
+
+
 @router.get('/devices/{workspace_id}/devices/bound')
 def device_bound(workspace_id):
+    '''
+    정확한 목적 아직 찾지 못함
+    '''
     data = {
     "list": [
         {
@@ -118,8 +136,12 @@ def device_bound(workspace_id):
     result = {"code": 0, "message": "success", "data": data}
     return json.load(result)
 
+
 @router.get('/devices/{workspace_id}/devices')
-async def device_list(workspace_id):
+def device_list(workspace_id):
+    '''
+    로그인한 장비 정보
+    '''
     data = [
       {
         "device_sn": "5YSZL260021E9E",
@@ -231,8 +253,12 @@ async def device_list(workspace_id):
     result = {"code": 0, "message": "success", "data": data}
     return json.load(result)
 
+
 @router.get('/devices/:workspace_id/devices/:device_sn')
 def device_sn(workspace_id, device_sn):
+    '''
+    디바이스 시리얼 넘버로 드론, 리모컨 구분하기 위한 정보들 전달
+    '''
     if device_sn == "5YSZL260021E9E":
         result = {"code":0,"message":"success","data":{"device_sn":device_sn,"device_name":"DJI RC Pro","workspace_id":f"{workspace_id}","device_index":"","device_desc":"Remote control for Mavic 3E/T and Mavic 3M","child_device_sn":"1581F5FKD232800D2TK8","domain":2,"type":144,"sub_type":0,"icon_url":{"normal_icon_url":"resource://pilot/drawable/tsa_person_normal","selected_icon_url":"resource://pilot/drawable/tsa_person_select"},"status":True,"bound_status":True,"login_time":"2023-05-15 05:17:01","bound_time":"2023-05-15 05:17:01","nickname":"DJI RC Pro","firmware_version":"02.00.0407","workspace_name":"Test Group One","firmware_status":1}}
     elif device_sn == "1581F5FKD232800D2TK8":
@@ -243,9 +269,12 @@ def device_sn(workspace_id, device_sn):
         result = {"code":0,"message":"success","data":{"device_sn":device_sn,"device_name":"Matrice 300","workspace_id":f"{workspace_id}","device_index":"A","device_desc":"","child_device_sn":"","domain":0,"type":77,"sub_type":2,"icon_url":{"normal_icon_url":"resource://pilot/drawable/tsa_person_normal","selected_icon_url":"resource://pilot/drawable/tsa_person_select"},"status":True,"bound_status":True,"login_time":"2023-05-15 05:17:01","bound_time":"2023-04-21 08:06:22","nickname":"Matrice 300","firmware_version":"06.01.0606","workspace_name":"Test Group One","firmware_status":1}}
     return result
 
+
 @router.post('/token/refresh')
 def token_refresh(item):
-    # post로 담겨오는 데이터 뭔지 확인 후 프론트에 쏴줄 데이터 생성
+    '''
+    post로 담겨오는 데이터 뭔지 확인 후 프론트에 쏴줄 데이터 생성
+    '''
     print(f"[token_refresh] {item}")
     data = {
       "mqtt_addr": emqx,
@@ -260,7 +289,14 @@ def token_refresh(item):
     result = {"code": 0, "message": "success", "data": data}
     return json.load(result)
 
+
 @router.post('/devices/:device_sn/binding')
+def device_binding(device_sn):
+    data = {"device_sn": f"{device_sn}"}
+
+    result = {"code": 0, "message": "success", "data": data}
+    return json.load(result)
+
 
 @router.put("/{item_id}", tags=["custom"],responses={403: {"description": "Operation forbidden"}})
 async def update_item(item_id: str):

@@ -60,7 +60,7 @@ class postgres:
             return print("[ERROR] Check SELECT")
 
 
-    # 프론트 액션에 필요한 쿼리 시작
+    # manage.py
     def login(self, username):
         try:
             text = f"SELECT account_id, password FROM public.user WHERE account_id = '{username}'"
@@ -85,7 +85,25 @@ class postgres:
             return print("[ERROR] check current_data")
 
 
-    def user_data(self, columns, table):
+    def users_data(self):
+        try:
+            text = """SELECT account_id, password, date_joined
+                    FROM public.user"""
+            rows = self.SELECT(text)
+            result = [
+                {"user_id": rows[i].password,
+                 "username": rows[i].account_id,
+                 "user_type": rows[i].user_type,
+                 "mqtt_username": rows[i].mqtt_username,
+                 "mqtt_password": rows[i].mqtt_password,
+                 "workspace_name": rows[i].mqtt_workspace_name,
+                 "create_time": rows[i].create_time} for i in len(rows)]
+            return result
+        except:
+            return print("[ERROR] check users_data]")
+
+
+    def remote_user_data(self, columns, table):
         try:
             text = f"SELECT {columns} FROM {table}"
             row = self.SELECT(text)
@@ -99,9 +117,10 @@ class postgres:
               "user_type": int(2)}
             return result
         except:
-            return print("[ERROR] check user_data")
+            return print("[ERROR] check remote_user_data")
 
 
+    # wayline.py
     def wayline_data(self):
         try:
             text = """SELECT oss_path->>'object_key' as object_key,
@@ -125,7 +144,7 @@ class postgres:
     
 
     def update_wayline(self, wpml_info, oss_path, object_key):
-        # object_key는 json이어야한다.
+        # object_key is in json
         try:
             text = f"""UPDATE public.waypoint_plan
                        SET wpml_info = {wpml_info}, oss_path = {oss_path}
@@ -137,7 +156,7 @@ class postgres:
 
 
     def get_object_key(self, wayline_id):
-        # wayline_id는 json이어야한다.
+        # wayline_id type is in json.
         try:
             text = f"""`SELECT oss_path ->> 'object_key' as object_key
                         FROM public.waypoint_plan
@@ -149,7 +168,7 @@ class postgres:
 
 
     def get_list_object_key(self):
-        # wayline_id는 json이어야한다.
+        # wayline_id type is in json.
         try:
             text = f"""SELECT oss_path ->> 'object_key' as object_key
                        FROM public.waypoint_plan
@@ -212,8 +231,8 @@ class postgres:
         # object_key는 json이어야한다.
         try:
             text = f"""DELETE FROM public.waypoint_plan
-            WHERE oss_path @> '{object_key}'
-            AND waypoint_plan_info is null;"""
+                    WHERE oss_path @> f'{object_key}'
+                    AND waypoint_plan_info is null;"""
             result = self.CRUD(text)
             return result
         except:
@@ -235,11 +254,11 @@ class postgres:
                     JOIN
                         public.drone_info m
                     ON
-                    (select w.wpml_info ->> 'droneId')::integer = m.id
+                        (select w.wpml_info ->> 'droneId')::integer = m.id
                     JOIN 
-                    public.drone_payload_info p
+                        public.drone_payload_info p
                     ON
-                    (select w.wpml_info ->> 'payloadId')::integer = p.id
+                        (select w.wpml_info ->> 'payloadId')::integer = p.id
                     WHERE
                         {whereSQL}
                     ORDER BY
