@@ -88,7 +88,15 @@ class postgres:
     def user_data(self, columns, table):
         try:
             text = f"SELECT {columns} FROM {table}"
-            result = self.SELECT(text)
+            row = self.SELECT(text)
+            result = {
+              "mqtt_addr": emqx,
+              "mqtt_username": "pilot",
+              "mqtt_password": "pilot123",
+              "username": row.username,
+              "user_id": row.user_id,
+              "workspace_id": row.workspace_id,
+              "user_type": int(2)}
             return result
         except:
             return print("[ERROR] check user_data")
