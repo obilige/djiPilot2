@@ -1,9 +1,11 @@
+# OSS 있는 케이스와 없는 케이스 모두 동작하도록 구현하기
 from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException
 from typing import Annotated
 from ..dependencies import get_token_header
 import os
 
 from utility.postgres import postgres as db
+from utility.minio import OSS
 
 import uuid
 import zipfile # kmz 파일 압축풀기 위한 모듈 사용
@@ -77,7 +79,6 @@ async def upload_wayline_file(file: Annotated[bytes, File()],
     return result
 
 
-# 여기서부터
 @router.get('/workspaces/{workspace_id}/waylines')
 async def waylines_data(workspace_id, order_by, page, page_size, favorited: bool = False, file_type: int = 5):
     '''
@@ -105,7 +106,22 @@ async def waylines_data(workspace_id, order_by, page, page_size, favorited: bool
     return result
     
     
-    
+@router.get('/workspaces/{workspace_id}/waylines/{wayline_id}/url')
+async def download(workspace_id, wayline_id):
+    '''
+    다운로드 링크 쏴주기
+    '''
+    try:
+        if OSS:
+            rows = db.get_object_key(wayline_id)
+            object_key = rows[0].object_key
+            
+            return OSS.download_file(object_key)
+        else:
+            pass
+    except:
+        return {"code": 500, "message": "fail download", "data": ""}
+
 
 
 @router.put("/{item_id}", tags=["cudstom"],responses={403: {"description": "Operation forbidden"}})

@@ -1,7 +1,9 @@
-from typing import Union
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from typing import Annotated, Union
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status, WebSocketException, Query, Depends, Cookie
 from route import manage, wayline, storage
 from fastapi.responses import HTMLResponse
+from time import time
+import json
 
 app = FastAPI()
 
@@ -52,9 +54,27 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            await manager.send_personal_message(f"You wrote: {data}", websocket)
-            await manager.broadcast(f"Client #{client_id} says: {data}")
+            with await websocket.receive_text() as data: # 서버가 컨트롤러로부터 메시지를 받으면 아래 코드 진행
+                data = eval(data) if type(data) == str else data
+                print(data)
+                if data['bizCode'] == "device_update_topo":
+                    await manager.send_personal_message(str({"biz_code": "device_update_topo", "timestamp": str(time()), "data": {}}))
+                elif data['bizCode'] == "device_online1" | "device_online2":
+                    await manager.send_personal_message(str({"biz_code": f"{data['bizCode']}"}))
+                    await manager.send_personal_message(str({"biz_code": "device_update_topo", "timestamp": str(time()), "data": {}}))
+                elif data['bizCode'] == "device_offline1" | "device_offline2":
+                    await manager.send_personal_message(str({"biz_code": f"{data['bizCode']}"}))
+                    await manager.send_personal_message(str({"biz_code": "device_update_topo", "timestamp": str(time()), "data": {}}))
+                elif data['bizCode'] == "device_osd":
+                    await manager.send_personal_message(str({"biz_code": f"{data['bizCode']}"}))
+                elif data['bizCdoe'] == "gateway_osd":
+                    await manager.send_personal_message(str({"biz_code": f"{data['bizCode']}"}))
+                elif data['bizCdoe'] == "osd":
+                    await manager.send_personal_message(str({"biz_code": f"{data['bizCode']}"}))                
+            # await manager.broadcast(f"Client #{client_id} says: {data}") # broadcast code
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast(f"Client #{client_id} left the chat")
+    finally:
+        pass # 에러 생겨도 서버 죽지않도록
+    
