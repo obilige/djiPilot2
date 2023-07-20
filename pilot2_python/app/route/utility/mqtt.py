@@ -50,10 +50,85 @@ class emqx:
         self.params = params # params는 개발 편의 위해 하드셋팅. 추후 DB쿼리 결과 등으로 소프트하게 변경
         self.device_online = device_online
 
+    #mqtt publish 함수
+    def MQTT_STATUS_REPLY(self, client, gateway_sn):
+        client.publish('sys/product/' + gateway_sn + '/status_reply', json.dumps({
+            "tid": params["gatewayList"][gateway_sn]["tid"],
+            "bid": params["gatewayList"][gateway_sn]["bid"],
+            "method": "update_topo",
+            "data": {"result": 0},
+            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
+        }), qos=0)
+
+    def MQTT_LIVE_STOP(self, client, params):
+        gateway_sn = ""
+        arrVideo = params["video_id"].split("/")
+        for key, value in params["gatewayList"].items():
+            if value["aircraft"] == arrVideo[0]:
+                gateway_sn = key
+                break
+        uuid_tid = str(uuid4())
+        uuid_bid = str(uuid4())
+        stopJson = {
+            "tid": uuid_tid,
+            "bid": uuid_bid,
+            "method": "live_stop_push",
+            "data": {
+                "video_id": params["gatewayList"][gateway_sn]["video_id"],
+            },
+            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
+        }
+        client.publish('thing/product/'+gateway_sn+'/services', json.dumps(stopJson), qos=1)
+
+    def MQTT_LIVE_START(self, client, params):
+        gateway_sn = ""
+        arrVideo = params["video_id"].split("/")
+        for key, value in params["gatewayList"].items():
+            if value["aircraft"] == arrVideo[0]:
+                gateway_sn = key
+                break
+        print("[MQTT_LIVE_START] sn", gateway_sn, "params", json.dumps(params))
+        params["gatewayList"][gateway_sn]["video_id"] = params["video_id"]
+        uuid_tid = str(uuid4())
+        uuid_bid = str(uuid4())
+        liveJson = {
+            "tid": uuid_tid,
+            "bid": uuid_bid,
+            "method": "live_start_push",
+            "data": {
+                "url_type": params["url_type"],
+                "url": params["url"],
+                "video_id": params["video_id"],
+                "video_quality": params["video_quality"]
+            }
+        }
+        client.publish('thing/product/'+gateway_sn+'/services', json.dumps(liveJson), qos=1)
+
+    def MQTT_LIVE_UPDATE(self, client, params):
+        gateway_sn = ""
+        arrVideo = params["video_id"].split("/")
+        for key, value in params["gatewayList"].items():
+            if value["aircraft"] == arrVideo[0]:
+                gateway_sn = key
+                break
+        uuid_tid = str(uuid4())
+        uuid_bid = str(uuid4())
+        updateJson = {
+            "tid": uuid_tid,
+            "bid": uuid_bid,
+            "method": "live_set_quality",
+            "data": {
+                "video_id": params["gatewayList"][gateway_sn]["video_id"],
+                "video_quality": 0
+            },
+            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
+        }
+        client.publish('thing/product/'+gateway_sn+'/services', json.dumps(updateJson), qos=1)
+
+    # mqtt 주요 액션별 코드 진행 함수
     def on_connect(self, client, userdata, flags, rc):
         '''mqtt 연결시 아래 topic들을 구독해야함(브로커로부터 데이터, 메세지 받기 위해)'''
         print("[MQTT] connect")
-        
         client.subscribe('sys/product/+/status')
         client.subscribe('sys/product/+/status_reply')
         client.subscribe('thing/product/#')
@@ -142,7 +217,7 @@ class emqx:
                 sub_online_number = len(json_data["data"]["sub_devices"])
                 if "device_online2" in params["gatewayList"][gateway_sn]:
                     # device_online1이 이미 gateway에 있는 경우, 2를 추가
-                    params['gatewayList'][gateway_sn]['bizCode'].add(f"device_online{sub_online_number+1}")
+                    params['gatewayList'][gateway_sn]['bizCode'].add(f"device_online{sub_online_number}")
                 else:
                     sub_json = json_data['sub_devices'][sub_online_number-1]
                     online_sub = {
@@ -188,10 +263,75 @@ class emqx:
                 params["gatewayList"][gateway_sn]["bizCode"].add("device_online1")
                 del params["gatewayList"][gateway_sn]["aircraft"]
                 
-                
-            elif len(json_data["data"]["sub_devices"]) < len(params['gatewayList'][gateway_sn]['bizCode']):
-                pass
-            
+            # elif len(json_data["data"]["sub_devices"]) < len(params['gatewayList'][gateway_sn]['bizCode']):
+
+            self.MQTT_STATUS_REPLY(client, split_topic[2])
+
+        elif split_topic[0] == "sys" and split_topic[1] == "product" and split_topic[3] == "status_reply":
+            if topic in params["topicList"]:
+                if params["topicList"][topic] != json.dumps(json_data):
+                    params["topicList"][topic] = json.dumps(json_data)
+                    print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+            else:
+                params["topicList"][topic] = json.dumps(json_data)
+                print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+
+        elif split_topic[0] == "thing" and split_topic[1] == "product" and split_topic[3] == "osd":
+            sn = split_topic[2]
+            gateway_sn = json_data["gateway"]
+            del json_data["bid"]
+            del json_data["tid"]
+            if topic in params["topicList"]:
+                if params["topicList"][topic] != json.dumps(json_data):
+                    params["topicList"][topic] = json.dumps(json_data)
+                    print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+            else:
+                params["topicList"].set(topic, json.dumps(json_data))
+                print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+
+            if gateway_sn in params["gatewayList"]:
+                if json_data["data"]["live_status"]:
+                    params["gatewayList"][gateway_sn]["gateway_osd"] = {"biz_code": "gateway_osd", "version": "1.0", "timestamp": str(int(datetime.datetime.now().timestamp() * 1000)), "data": {"host": json_data["data"], "sn": sn}}
+                    params["gatewayList"][gateway_sn]["bizCode"].add("gateway_osd")
+                else:
+                    params["gatewayList"][gateway_sn]["device_osd"] = {"biz_code": "device_osd", "version": "1.0", "timestamp": str(int(datetime.datetime.now().timestamp() * 1000)), "data": {"host": json_data["data"], "sn": sn}}
+                    params["gatewayList"][gateway_sn]["bizCode"].add("device_osd")
+                params["gatewayList"][gateway_sn]["osd"] = {"biz_code": "device_osd", "version": "1.0", "timestamp": str(int(datetime.datetime.now().timestamp() * 1000)), "data": {"sn": sn}}
+                params["gatewayList"][gateway_sn]["bizCode"].add("osd")
+
+        elif split_topic[0] == "thing" and split_topic[1] == "product" and split_topic[3] == "events":
+            del json_data["bid"]
+            del json_data["tid"]
+            if (topic + "|" + json_data["data"]["event"]) in params["topicList"]:
+                if params["topicList"][topic + "|" + json_data["data"]["event"]] != json.dumps(json_data):
+                    params["topicList"][topic + "|" + json_data["data"]["event"]] = json.dumps(json_data)
+                    print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+            else:
+                params["topicList"][topic + "|" + json_data["data"]["event"]] = json.dumps(json_data)
+                print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+
+        elif split_topic[0] == "thing" and split_topic[1] == "product" and split_topic[3] == "state":
+            del json_data["bid"]
+            del json_data["tid"]
+            gateway_sn = split_topic[2]
+            if topic in params["topicList"]:
+                if params["topicList"][topic] != json.dumps(json_data):
+                    params["topicList"][topic] = json.dumps(json_data)
+                    print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+            else:
+                params["topicList"].set(topic, json.dumps(json_data))
+                print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
+
+            if "live_capacity" in json_data["data"]:
+                if "device_list" in json_data["data"]["live_capacity"]:
+                    if len(json_data["data"]["live_capacity"]["device_list"]) > 0:
+                        params["deviceList"].find(lambda ele: ele["sn"] == gateway_sn)["camera_index"] = json_data["data"]["live_capacity"]["device_list"][0]["camera_list"][0]["camera_index"]
+                        params["deviceList"].find(lambda ele: ele["sn"] == gateway_sn)["video_list"] = json_data["data"]["live_capacity"]["device_list"][0]["camera_list"][0]["video_list"]
+
+        else:
+            print("======================================[MQTT topic] : ", topic, json.dumps(json_data))        
+
+
     def client(self, client_id):
         mqtt_client = mqtt.Client(client_id=client_id, transport=transport)
         mqtt_client.ws_set_options(path="/mqtt", headers=None)
@@ -210,180 +350,21 @@ class emqx:
         mqtt_client.loop_start()
         
         return mqtt_client
-        
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def on_connect(client, userdata, flags, rc):
-    print("[MQTT] connect")
-    client.subscribe('sys/product/+/status')
-    client.subscribe('sys/product/+/status_reply')
-    client.subscribe('thing/product/#')
-
-def on_error(client, userdata, error):
-    print("[MQTT-error :", error)
-
-def on_reconnect(client):
-    print("[MQTT-reconnect]")
-
-def on_close(client):
-    print("[MQTT-close]")
-
-def on_disconnect(client, userdata, rc):
-    print("[MQTT-disconnect]")
-
-def on_packetsend(client, packet):
-    pass
-
-def on_packetreceive(client, packet):
-    pass
-
-def on_message(client, userdata, msg):
-    ''' Main Function '''
-    topic = msg.topic
-    message = msg.payload.decode("utf-8")
-    json_data = json.loads(message)
     
-    split_topic = topic.split('/')
-    if split_topic[0] == "sys" & split_topic[1] == "product" & split_topic[3] == "status":
-        if topic in params["topicList"] & params["topicList"].get(topic) != json.dumps(json_data):
-            params["topicList"][topic] = json.dumps(json_data)
-            print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
-        else:
-            params["topicList"][topic] = json.dumps(json_data)
-            print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
-    
-        gateway_sn = split_topic[2]
-        # filter(조건, 반복해서 읽을 데이터) : 조건에 맞는 데이터만 뽑아내는 파이썬 내장함수
-        pObj = next(filter(
-            lambda x:
-                x["domain"] == json_data["data"]["domain"]
-            and x["type"] == json_data["data"]["type"]
-            and x["sub_type"] == json_data["data"]["sub_type"],
-            params["productList"]
-        ))
-        online_json = {
-            "biz_code": "device_online",
-            "version": json_data["data"]["version"],
-            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000)),
-            "data": {
-                "sn": gateway_sn,
-                "device_model": {
-                    "domain": json_data["data"]["domain"],
-                    "key": f"{json_data['data']['domain']}-{json_data['data']['type']}-{json_data['data']['sub_type']}",
-                    "sub_type": json_data["data"]["sub_type"],
-                    "type": json_data["data"]["type"]
-                },
-                "online_status": True,
-                "device_callsign": pObj["name"],
-                "model": pObj["name"],
-                "bound_status": True,
-                "gateway_sn": "",
-                "domain": json_data["data"]["domain"]
-            }
-        }
+
         
-        # 게이트웨이에 감지된 드론, 컨트롤러 status update // 게이트웨이에 없으면 첫번째 로그인!
-        if gateway_sn not in params["gatewayList"]:
-            device_status = next(filter(lambda x: x["sn"] == gateway_sn, params["gatewayList"]))
-            device_status['bound_status'] = True
-            device_status['online_status'] = True
         
-            params["gatewayList"][gateway_sn]["tid"] = json_data["tid"]
-            params["gatewayList"][gateway_sn]["bid"] = json_data["bid"]
-            params["gatewayList"][gateway_sn]["device_online1"] = online_json
-            params["gatewayList"][gateway_sn]["bizCode"] = {"device_online1"}
-        # 게이트웨이에 있으면 일단 tid, bid만 게이트웨이에 등록
-        else:
-            params["gatewayList"][gateway_sn]["tid"] = json_data["tid"]
-            params["gatewayList"][gateway_sn]["bid"] = json_data["bid"]
-        
-        # 두 대 이상 접속하는 경우, sub_devices로 데이터가 들어옴    
-        if len(json_data["data"]["sub_devices"]) > 0:
-            sub_online_number = len(json_data["data"]["sub_devices"])
-            if "device_online2" in params["gatewayList"][gateway_sn]:
-                # device_online1이 이미 gateway에 있는 경우, 2를 추가
-                params['gatewayList'][gateway_sn]['bizCode'].add(f"device_online{sub_online_number+1}")
-            else:
-                sub_json = json_data['sub_devices'][sub_online_number-1]
-                online_sub = {
-                    "biz_code": "device_online",
-                    "version": json_data["data"]["version"],
-                    "timestamp": str(int(datetime.datetime.now().timestamp() * 1000)),
-                    "data": {
-                        "sn": sub_json["sn"],
-                        "device_model": {
-                            "domain": sub_json["domain"],
-                            "key": f"{sub_json['domain']}-{sub_json['type']}-{sub_json['sub_type']}",
-                            "sub_type": sub_json["sub_type"],
-                            "type": sub_json["type"]
-                        },
-                        "online_status": True,
-                        "device_callsign": pObj["name"],
-                        "model": pObj["name"],
-                        "bound_status": True,
-                        "gateway_sn": gateway_sn,
-                        "domain": sub_json["domain"]
-                    }
-                }
-                sub_device_status = next(filter(lambda x: x["sn"] == gateway_sn, params["gatewayList"]))
-                sub_device_status["bound_status"] = True
-                sub_device_status["online_status"] = True
-                params["gatewayList"][gateway_sn]["aircraft"] = sub_json["sn"]
-                params["gatewayList"][gateway_sn][f"device_online{sub_online_number+1}"] = online_sub
-                params["gatewayList"][gateway_sn]["bizCode"].add(f"device_online{sub_online_number+1}")
-        
-        # 접속한 두 드론 중 하나가 로그아웃하면?
-        # 현재 방법은 두 대일때만 유효. sub_devices 수와 gateway 수가 다를 때, 하나가 로그아웃한 것이므로 이 때 로그아웃한 기종을 찾아 online 넘버를 지워주는 작업 필요
-        elif len(json_data["data"]["sub_devices"]) == 0 and "device_online2" in params["gatewayList"][gateway_sn]:
-            online_sub_json = params["gatewayList"][gateway_sn]["device_online2"]
-            online_sub_json["biz_code"] = "device_offline"
-            online_sub_json["timestamp"] = str(int(datetime.datetime.now().timestamp() * 1000))
-            online_sub_json["data"]["online_status"] = False
-            online_sub_json["data"]["bound_status"] = False
-            online_sub_json["data"]["gateway_sn"] = ""
-            print("\t++++ set device_online2", json.dumps(online_sub_json["data"]))
-            params["gatewayList"][gateway_sn]["device_offline2"] = online_sub_json
-            del params["gatewayList"][gateway_sn]["device_online2"]
-            params["gatewayList"][gateway_sn]["bizCode"].add("device_offline2")
-            params["gatewayList"][gateway_sn]["bizCode"].add("device_online1")
-            del params["gatewayList"][gateway_sn]["aircraft"]
-            
-            
-        elif len(json_data["data"]["sub_devices"]) < len(params['gatewayList'][gateway_sn]['bizCode']):
-            pass
 
 
 
-# 클라이언트 생성 및 접속(websocket)
-mqtt_client = mqtt.Client(client_id=client_id, transport=transport)
-mqtt_client.ws_set_options(path="/mqtt", headers=None)
 
-mqtt_client.subscribe()
 
-# 클라이언트에 앞서 선언한 함수 붙이기
-mqtt_client.on_connect = on_connect
-mqtt_client.on_message = on_message
-mqtt_client.on_error = on_error
-mqtt_client.on_reconnect = on_reconnect
-mqtt_client.on_close = on_close
-mqtt_client.on_disconnect = on_disconnect
-mqtt_client.on_packetsend = on_packetsend
-mqtt_client.on_packetreceive = on_packetreceive
 
-# mqtt 메세지 전송, 수신 loop로 계속 이어지도록 하기
-mqtt_client.loop_start()
+
+
+
+
+
+
+
+

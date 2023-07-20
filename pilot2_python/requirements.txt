@@ -5,4 +5,3 @@ psycopg2
 paho-mqtt
 minio
 xmltodict
-py-mon>=1.1,<1.2
