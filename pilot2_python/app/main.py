@@ -76,5 +76,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
         manager.disconnect(websocket)
         await manager.broadcast(f"Client #{client_id} left the chat")
     finally:
-        pass # 에러 생겨도 서버 죽지않도록
+        print("[main.py || app.websocket] 알 수 없는 에러 발생. 예외처리")
+        pass # 에러 생겨도 서버 죽지않고 계속 On 유지
     

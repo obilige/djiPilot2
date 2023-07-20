@@ -16,6 +16,8 @@ transport = "websockets"
 topic = [('sys/product/+/status', 0), 
          ('sys/product/+/status_reply', 0),
          ('thing/product/#',0) ,]
+# DB에 productList, deviceList 정보 등록 후 함수 생성(쿼리 -> config 생성 -> 리턴)
+# productList, deviceList 등록하는 기능도 만들어보기
 config = {
     "gatewayList": defaultdict(dict),
     "productList": [
@@ -35,9 +37,10 @@ config = {
     "topicList": defaultdict(dict)
 }
 
-mqtt_client = mqtt.Client(client_id=client_id, transport=transport)
-mqtt_client.ws_set_options(path="/mqtt", headers=None)
 
+
+
+# set mqtt basic function
 def on_connect(client, userdata, flags, rc):
     print("[MQTT] connect")
     client.subscribe('sys/product/+/status')
@@ -51,7 +54,7 @@ def on_message(client, userdata, msg):
 
     arr_topic = topic.split("/")
     if arr_topic[0] == "sys" and arr_topic[1] == "product" and arr_topic[3] == "status":
-        if config["topicList"].has(topic):
+        if topic in config["topicList"]:
             if config["topicList"].get(topic) != json.dumps(json_data):
                 config["topicList"].set(topic, json.dumps(json_data))
                 print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
@@ -195,6 +198,11 @@ def on_message(client, userdata, msg):
     else:
         print("======================================[MQTT topic] : ", topic, json.dumps(json_data))
 
+
+# set client
+mqtt_client = mqtt.Client(client_id=client_id, transport=transport)
+mqtt_client.ws_set_options(path="/mqtt", headers=None)
+
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.on_error = lambda client, userdata, msg: print("[MQTT-error : ", msg)
@@ -205,6 +213,8 @@ mqtt_client.on_offline = lambda: print("[MQTT-offline")
 mqtt_client.on_packetsend = lambda client, userdata, msg: None
 mqtt_client.on_packetreceive = lambda client, userdata, msg: None
 
+
+# mqtt function
 def MQTT_STATUS_REPLY(gateway_sn):
     mqtt_client.publish('sys/product/' + gateway_sn + '/status_reply', json.dumps({
         "tid": config["gatewayList"][gateway_sn]["tid"],

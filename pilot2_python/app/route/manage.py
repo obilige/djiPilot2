@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-from ..dependencies import get_token_header
 from utility.postgres import postgres as db
 import json
 
 router = APIRouter(
     prefix="/back/manage/api/v1",
-    tags=["manage"],
-    dependencies=[Depends(get_token_header)],
-    responses={404: {"description": "Not found"}},
+    tags=["manage"]
 )
 
 emqx = "emqx-broker:8083"
