@@ -135,12 +135,12 @@ def on_message(client, userdata, msg):
         MQTT_STATUS_REPLY(arr_topic[2])
 
     elif arr_topic[0] == "sys" and arr_topic[1] == "product" and arr_topic[3] == "status_reply":
-        if config["topicList"].has(topic):
-            if config["topicList"].get(topic) != json.dumps(json_data):
-                config["topicList"].set(topic, json.dumps(json_data))
+        if topic in config["topicList"]:
+            if config["topicList"][topic] != json.dumps(json_data):
+                config["topicList"][topic] = json.dumps(json_data)
                 print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
         else:
-            config["topicList"].set(topic, json.dumps(json_data))
+            config["topicList"][topic] = json.dumps(json_data)
             print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
 
     elif arr_topic[0] == "thing" and arr_topic[1] == "product" and arr_topic[3] == "osd":
@@ -148,9 +148,9 @@ def on_message(client, userdata, msg):
         gateway_sn = json_data["gateway"]
         del json_data["bid"]
         del json_data["tid"]
-        if config["topicList"].has(topic):
-            if config["topicList"].get(topic) != json.dumps(json_data):
-                config["topicList"].set(topic, json.dumps(json_data))
+        if topic in config["topicList"]:
+            if config["topicList"][topic] != json.dumps(json_data):
+                config["topicList"][topic] = json.dumps(json_data)
                 print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
         else:
             config["topicList"].set(topic, json.dumps(json_data))
@@ -169,21 +169,21 @@ def on_message(client, userdata, msg):
     elif arr_topic[0] == "thing" and arr_topic[1] == "product" and arr_topic[3] == "events":
         del json_data["bid"]
         del json_data["tid"]
-        if config["topicList"].has(topic + "|" + json_data["data"]["event"]):
-            if config["topicList"].get(topic + "|" + json_data["data"]["event"]) != json.dumps(json_data):
-                config["topicList"].set(topic + "|" + json_data["data"]["event"], json.dumps(json_data))
+        if (topic + "|" + json_data["data"]["event"]) in config["topicList"]:
+            if config["topicList"][topic + "|" + json_data["data"]["event"]] != json.dumps(json_data):
+                config["topicList"][topic + "|" + json_data["data"]["event"]] = json.dumps(json_data)
                 print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
         else:
-            config["topicList"].set(topic + "|" + json_data["data"]["event"], json.dumps(json_data))
+            config["topicList"][topic + "|" + json_data["data"]["event"]] = json.dumps(json_data)
             print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
 
     elif arr_topic[0] == "thing" and arr_topic[1] == "product" and arr_topic[3] == "state":
         del json_data["bid"]
         del json_data["tid"]
         gateway_sn = arr_topic[2]
-        if config["topicList"].has(topic):
-            if config["topicList"].get(topic) != json.dumps(json_data):
-                config["topicList"].set(topic, json.dumps(json_data))
+        if topic in config["topicList"]:
+            if config["topicList"][topic] != json.dumps(json_data):
+                config["topicList"][topic] = json.dumps(json_data)
                 print("[MQTT-", topic, "]", "\t", json.dumps(json_data))
         else:
             config["topicList"].set(topic, json.dumps(json_data))
