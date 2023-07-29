@@ -18,12 +18,12 @@ services:
 
   # 개발중인 백엔드(main). 회사에선 nodejs로 개발. 현 포폴에선 python으로 개발.
   pilot2back:
-    build: ./CloudAPI
+    build: ./pilot2_python
     image: sinto-pilot2-back
     depends_on:
       - emqx-broker
     volumes:
-      - ./CloudAPI/source:/home/pilot/source
+      - ./pilot2_python/app:/home/code/app
     restart: "always"
     networks:
       - full_default
