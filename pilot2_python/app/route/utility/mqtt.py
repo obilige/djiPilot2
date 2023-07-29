@@ -50,88 +50,10 @@ class emqx:
         self.params = params # params는 개발 편의 위해 하드셋팅. 추후 DB쿼리 결과 등으로 소프트하게 변경
         self.device_online = device_online
 
-    #mqtt publish 함수
-    def MQTT_STATUS_REPLY(self, client, gateway_sn):
-        client.publish('sys/product/' + gateway_sn + '/status_reply', json.dumps({
-            "tid": params["gatewayList"][gateway_sn]["tid"],
-            "bid": params["gatewayList"][gateway_sn]["bid"],
-            "method": "update_topo",
-            "data": {"result": 0},
-            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
-        }), qos=0)
-
-    def MQTT_LIVE_STOP(self, client, params):
-        gateway_sn = ""
-        arrVideo = params["video_id"].split("/")
-        for key, value in params["gatewayList"].items():
-            if value["aircraft"] == arrVideo[0]:
-                gateway_sn = key
-                break
-        uuid_tid = str(uuid4())
-        uuid_bid = str(uuid4())
-        stopJson = {
-            "tid": uuid_tid,
-            "bid": uuid_bid,
-            "method": "live_stop_push",
-            "data": {
-                "video_id": params["gatewayList"][gateway_sn]["video_id"],
-            },
-            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
-        }
-        client.publish('thing/product/'+gateway_sn+'/services', json.dumps(stopJson), qos=1)
-
-    def MQTT_LIVE_START(self, client, params):
-        gateway_sn = ""
-        arrVideo = params["video_id"].split("/")
-        for key, value in params["gatewayList"].items():
-            if value["aircraft"] == arrVideo[0]:
-                gateway_sn = key
-                break
-        print("[MQTT_LIVE_START] sn", gateway_sn, "params", json.dumps(params))
-        params["gatewayList"][gateway_sn]["video_id"] = params["video_id"]
-        uuid_tid = str(uuid4())
-        uuid_bid = str(uuid4())
-        liveJson = {
-            "tid": uuid_tid,
-            "bid": uuid_bid,
-            "method": "live_start_push",
-            "data": {
-                "url_type": params["url_type"],
-                "url": params["url"],
-                "video_id": params["video_id"],
-                "video_quality": params["video_quality"]
-            }
-        }
-        client.publish('thing/product/'+gateway_sn+'/services', json.dumps(liveJson), qos=1)
-
-    def MQTT_LIVE_UPDATE(self, client, params):
-        gateway_sn = ""
-        arrVideo = params["video_id"].split("/")
-        for key, value in params["gatewayList"].items():
-            if value["aircraft"] == arrVideo[0]:
-                gateway_sn = key
-                break
-        uuid_tid = str(uuid4())
-        uuid_bid = str(uuid4())
-        updateJson = {
-            "tid": uuid_tid,
-            "bid": uuid_bid,
-            "method": "live_set_quality",
-            "data": {
-                "video_id": params["gatewayList"][gateway_sn]["video_id"],
-                "video_quality": 0
-            },
-            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
-        }
-        client.publish('thing/product/'+gateway_sn+'/services', json.dumps(updateJson), qos=1)
-
     # mqtt 주요 액션별 코드 진행 함수
     def on_connect(self, client, userdata, flags, rc):
         '''mqtt 연결시 아래 topic들을 구독해야함(브로커로부터 데이터, 메세지 받기 위해)'''
         print("[MQTT] connect")
-        client.subscribe('sys/product/+/status')
-        client.subscribe('sys/product/+/status_reply')
-        client.subscribe('thing/product/#')
 
     def on_error(self, client, userdata, error):
         print("[MQTT-error :", error)
@@ -333,26 +255,120 @@ class emqx:
 
 
     def client(self, client_id):
-        mqtt_client = mqtt.Client(client_id=client_id, transport=transport)
-        mqtt_client.ws_set_options(path="/mqtt", headers=None)
+        self.mqtt_client = mqtt.Client(client_id=client_id, transport=transport)
+        self.mqtt_client.ws_set_options(path="/mqtt", headers=None)
 
         # 클라이언트에 앞서 선언한 함수 붙이기
-        mqtt_client.on_connect = self.on_connect
-        mqtt_client.on_message = self.on_message
-        mqtt_client.on_error = self.on_error
-        mqtt_client.on_reconnect = self.on_reconnect
-        mqtt_client.on_close = self.on_close
-        mqtt_client.on_disconnect = self.on_disconnect
-        mqtt_client.on_packetsend = self.on_packetsend
-        mqtt_client.on_packetreceive = self.on_packetreceive
+        self.mqtt_client.on_connect = self.on_connect
+        self.mqtt_client.on_message = self.on_message
+        self.mqtt_client.on_error = self.on_error
+        self.mqtt_client.on_reconnect = self.on_reconnect
+        self.mqtt_client.on_close = self.on_close
+        self.mqtt_client.on_disconnect = self.on_disconnect
+        self.mqtt_client.on_packetsend = self.on_packetsend
+        self.mqtt_client.on_packetreceive = self.on_packetreceive
 
         # mqtt 메세지 전송, 수신 loop로 계속 이어지도록 하기
-        mqtt_client.loop_start()
-        
-        return mqtt_client
+        self.mqtt_client.loop_start()
     
+    # mqtt function
+    def MQTT_STATUS_REPLY(self, gateway_sn):
+        self.mqtt_client.publish('sys/product/' + gateway_sn + '/status_reply', json.dumps({
+            "tid": params["gatewayList"][gateway_sn]["tid"],
+            "bid": params["gatewayList"][gateway_sn]["bid"],
+            "method": "update_topo",
+            "data": {"result": 0},
+            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
+        }), qos=0)
 
-        
+    def MQTT_LIVE_STOP(self, params):
+        gateway_sn = ""
+        arrVideo = params["video_id"].split("/")
+        for key, value in params["gatewayList"].items():
+            if value["aircraft"] == arrVideo[0]:
+                gateway_sn = key
+                break
+        uuid_tid = str(uuid4())
+        uuid_bid = str(uuid4())
+        stopJson = {
+            "tid": uuid_tid,
+            "bid": uuid_bid,
+            "method": "live_stop_push",
+            "data": {
+                "video_id": params["gatewayList"][gateway_sn]["video_id"],
+            },
+            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
+        }
+        self.mqtt_client.publish('thing/product/'+gateway_sn+'/services', json.dumps(stopJson), qos=1)
+
+    def MQTT_LIVE_START(self, params):
+        gateway_sn = ""
+        arrVideo = params["video_id"].split("/")
+        for key, value in params["gatewayList"].items():
+            if value["aircraft"] == arrVideo[0]:
+                gateway_sn = key
+                break
+        print("[MQTT_LIVE_START] sn", gateway_sn, "params", json.dumps(params))
+        params["gatewayList"][gateway_sn]["video_id"] = params["video_id"]
+        uuid_tid = str(uuid4())
+        uuid_bid = str(uuid4())
+        liveJson = {
+            "tid": uuid_tid,
+            "bid": uuid_bid,
+            "method": "live_start_push",
+            "data": {
+                "url_type": params["url_type"],
+                "url": params["url"],
+                "video_id": params["video_id"],
+                "video_quality": params["video_quality"]
+            }
+        }
+        self.mqtt_client.publish('thing/product/'+gateway_sn+'/services', json.dumps(liveJson), qos=1)
+
+    def MQTT_LIVE_UPDATE(self, params):
+        gateway_sn = ""
+        arrVideo = params["video_id"].split("/")
+        for key, value in params["gatewayList"].items():
+            if value["aircraft"] == arrVideo[0]:
+                gateway_sn = key
+                break
+        uuid_tid = str(uuid4())
+        uuid_bid = str(uuid4())
+        updateJson = {
+            "tid": uuid_tid,
+            "bid": uuid_bid,
+            "method": "live_set_quality",
+            "data": {
+                "video_id": params["gatewayList"][gateway_sn]["video_id"],
+                "video_quality": 0
+            },
+            "timestamp": str(int(datetime.datetime.now().timestamp() * 1000))
+        }
+        self.mqtt_client.publish('thing/product/'+gateway_sn+'/services', json.dumps(updateJson), qos=1)
+
+    '''
+    for export function to use mqtt at other script
+    '''
+    # publish
+    def mqttPublish(self, topic, message, options=None, qos=None):
+        return self.mqtt_client.publish(topic, message, qos=0)
+
+    # subscribe
+    def mqttSubscribe(self, topic, options=None, qos=None):
+        # self.mqtt_client.subscribe('sys/product/+/status')
+        # self.mqtt_client.subscribe('sys/product/+/status_reply')
+        # self.mqtt_client.subscribe('thing/product/#')
+        return self.mqtt_client.subscribe(self.topic, qos=1)
+    
+    def mqttUnsubscribe(self, topic, options=None, qos=None):
+        # self.mqtt_client.unsubscribe('sys/product/+/status')
+        # self.mqtt_client.unsubscribe('sys/product/+/status_reply')
+        # self.mqtt_client.unsubscribe('thing/product/#')
+        return self.mqtt_client.unsubscribe(self.topic, qos=0)
+
+    # listen
+    def mqttListen(self, topic, message, packet):
+        return self.mqtt_client.on_message(topic, message, packet)
         
 
 

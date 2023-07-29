@@ -5,6 +5,9 @@ from fastapi.responses import HTMLResponse
 from time import time
 import json
 
+from route.utility import mqtt
+
+
 app = FastAPI()
 
 # http(api)
@@ -51,7 +54,8 @@ manager = ConnectionManager()
 # wireshark로 드론별 메세지 송수신 어떻게 하는지 파악하기
 @app.websocket("/back/api/v1/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    await manager.connect(websocket)
+    with await manager.connect(websocket) as ws:
+        mqtt.emqx.mqttSubscribe()
     try:
         while True:
             with await websocket.receive_text() as data: # 서버가 컨트롤러로부터 메시지를 받으면 아래 코드 진행
@@ -74,6 +78,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
             # await manager.broadcast(f"Client #{client_id} says: {data}") # broadcast code
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        mqtt.emqx.mqttUnsubscribe()
         await manager.broadcast(f"Client #{client_id} left the chat")
     finally:
         print("[main.py || app.websocket] 알 수 없는 에러 발생. 예외처리")
