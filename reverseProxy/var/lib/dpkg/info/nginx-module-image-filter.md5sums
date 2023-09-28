@@ -1,0 +1,5 @@
+713a58c716bc63cffe517f578de54e06  usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so
+bf0199543e2d4875277c62075bd66956  usr/lib/nginx/modules/ngx_http_image_filter_module.so
+8659a8c4ab88aa11fa2444907a36a33a  usr/share/doc/nginx-module-image-filter/changelog.Debian.gz
+7d3fa426a8a648980dd18a2d0b5f842d  usr/share/doc/nginx-module-image-filter/changelog.gz
+928c8b677713b532d386034283a8ff17  usr/share/doc/nginx-module-image-filter/copyright
