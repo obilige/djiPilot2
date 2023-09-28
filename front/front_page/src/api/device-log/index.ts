@@ -2,7 +2,7 @@ import request, { IWorkspaceResponse, IListWorkspaceResponse } from '/@/api/http
 import { DeviceValue, DOMAIN } from '/@/types/device'
 import { DeviceLogUploadStatusEnum } from '/@/types/device-log'
 import { ELocalStorageKey } from '/@/types'
-import { CURRENT_CONFIG } from '/@/api/http/config'
+import { CURRENT_CONFIG } from '../http/config'
 
 const MNG_API_PREFIX = '/manage/api/v1'
 

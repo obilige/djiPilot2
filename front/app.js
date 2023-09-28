@@ -6,9 +6,9 @@ var history = require('connect-history-api-fallback');
 var app = express();
 
 app.use(history({
-  index: '/sample/index.html',
+  index: '/front/index.html',
   verbose: true    
 })); 
-app.use('/sample/', express.static(path.join(__dirname, 'dist')));
+app.use('/front/', express.static(path.join(__dirname, 'dist')));
 
-app.listen(8081);
+app.listen(8080);

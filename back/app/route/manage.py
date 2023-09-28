@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from utility.postgres import postgres as db
+from .utility.db import postgres as db
 import json
 
 router = APIRouter(

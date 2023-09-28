@@ -1,11 +1,11 @@
 from typing import Annotated, Union
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status, WebSocketException, Query, Depends, Cookie
-from route import manage, wayline, storage
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status, Query, Depends, Cookie
+from .route import manage, wayline, storage, map
 from fastapi.responses import HTMLResponse
 from time import time
 import json
 
-from route.utility import mqtt
+from .route.utility import mqtt
 
 
 app = FastAPI()
@@ -14,9 +14,10 @@ app = FastAPI()
 app.include_router(manage.router)
 app.include_router(wayline.router)
 app.include_router(storage.router)
+app.include_router(map.router)
 
 
-@app.get("/back")
+@app.get("/back/")
 def check_connect():
     try:
         code = 0

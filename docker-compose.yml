@@ -6,14 +6,15 @@ services:
     depends_on:
       - pilot2front
     ports:
-      - "80:80"
-      - "443:43"
+      - "8756:8756"
+      - "443:443"
     environment:
       - TZ=Asia/Seoul
     volumes:
       - /etc/localtime:/etc/localtime
       - ./reverseProxy/etc/nginx:/etc/nginx
       - ./reverseProxy/var/lib:/var/lib
+    restart: "always"
 
   # dji에서 pilot2 개발을 위해 제공하는 샘플 프론트 페이지 활용
   # 구조 변경
@@ -22,8 +23,10 @@ services:
     image: pilot2-front
     depends_on:
       - pilot2back
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./front/app.js:/app/app.js
 
   # 개발중인 백엔드(main). 회사에선 nodejs로 개발. 현 포폴에선 python으로 개발.
   pilot2back:
@@ -32,20 +35,20 @@ services:
     depends_on:
       - database
       - emqx-broker
-    expose:
-      - "6789"
+    ports:
+      - "6789:6789"
     volumes:
-      - ./back/app:/home/code/app
+      - ./back/app:/code/app
     restart: "always"
 
   # database: postgresSQL
   database:
     build: ./database
     image: pilot2-db
+    ports:
+      - "5432:5432"
     volumes:
       - ~/storage/postgresql/data12.4:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
 
   # broker - client || subscribe - publish 개념으로 서버간 메세지 주고받는 프로토콜
   # 18083은 mqtt 관리자용 dashboard. 관리 편이성 위해 외부에 노출. 사용하지 않으면 ports 옵션은 지워줘도 무방함

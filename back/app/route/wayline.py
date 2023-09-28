@@ -1,11 +1,10 @@
 # OSS 있는 케이스와 없는 케이스 모두 동작하도록 구현하기
 from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException
 from typing import Annotated
-from ..dependencies import get_token_header
 import os
 
-from utility.postgres import postgres as db
-from utility.minio import OSS
+from .utility.db import postgres as db
+from .utility.oss import minio
 
 import uuid
 import zipfile # kmz 파일 압축풀기 위한 모듈 사용
@@ -15,7 +14,6 @@ import json # xmltodict를 바로 사용하면 안에 리스트 담겨서 나옴
 router = APIRouter(
     prefix="/back/wayline/api/v1",
     tags=["wayline"],
-    dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -28,10 +26,8 @@ async def hello():
 
 
 @router.post('/workspaces/{workspace_id}/waylines/file/upload')
-async def upload_wayline_file(file: Annotated[bytes, File()],
-    fileb: Annotated[UploadFile, File()],
-    token: Annotated[str, Form()],
-    workspace_id):
+# async def upload_wayline_file(file: Annotated[bytes, File()], workspace_id):
+async def upload_wayline_file():
     """
     1. 경로파일 업로드
     2. OSS or No OSS ?  No OSS로 구현

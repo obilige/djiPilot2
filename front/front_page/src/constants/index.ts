@@ -1,4 +1,4 @@
-import { CURRENT_CONFIG } from '/@/api/http/config'
+import { CURRENT_CONFIG } from '../api/http/config'
 
 export const AMapConfig = {
   key: CURRENT_CONFIG.amapKey,

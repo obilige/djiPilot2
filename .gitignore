@@ -4,4 +4,5 @@
 package-lock.json.
 node_modules
 temp
-_pycache_
+front/front_page/src/config.ts
+__pycache__

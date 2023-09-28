@@ -62,7 +62,7 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => defineConfig(
       },
     }
   },
-  base: '/sample/',
+  base: '/front/',
   build: {
     target: ['es2015'], // 最低支持 es2015
     sourcemap: true

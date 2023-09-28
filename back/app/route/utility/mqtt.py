@@ -35,7 +35,7 @@ params = {
     ],
     "topicList": defaultdict(dict)
 }
-device_online = {i:f"device_offline{i}" for i in range(len(params['device'])/2)} #리모컨이랑 드론이 한쌍
+# device_online = {i:f"device_offline{i}" for i in range(len(params['device'])/2)} #리모컨이랑 드론이 한쌍
 
 
 
@@ -48,7 +48,7 @@ class emqx:
         self.transport = transport
         self.topic = topic
         self.params = params # params는 개발 편의 위해 하드셋팅. 추후 DB쿼리 결과 등으로 소프트하게 변경
-        self.device_online = device_online
+        # self.device_online = device_online
 
     # mqtt 주요 액션별 코드 진행 함수
     def on_connect(self, client, userdata, flags, rc):
