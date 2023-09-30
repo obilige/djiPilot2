@@ -48,8 +48,8 @@ services:
     depends_on:
       - database
       - emqx-broker
-    ports:
-      - "6789:6789"
+    expose:
+      - "6789"
     volumes:
       - ./back/app:/code/app
     restart: "always"
