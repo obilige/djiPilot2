@@ -26,8 +26,8 @@ async def hello():
 
 
 @router.post('/workspaces/{workspace_id}/waylines/file/upload')
-# async def upload_wayline_file(file: Annotated[bytes, File()], workspace_id):
-async def upload_wayline_file():
+async def upload_wayline_file(workspace_id, file: UploadFile):
+# async def upload_wayline_file():
     """
     1. 경로파일 업로드
     2. OSS or No OSS ?  No OSS로 구현
@@ -108,11 +108,11 @@ async def download(workspace_id, wayline_id):
     다운로드 링크 쏴주기
     '''
     try:
-        if OSS:
+        if minio:
             rows = db.get_object_key(wayline_id)
             object_key = rows[0].object_key
             
-            return OSS.download_file(object_key)
+            return minio.download_file(object_key)
         else:
             pass
     except:

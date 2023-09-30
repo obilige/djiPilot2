@@ -7,3 +7,4 @@ minio
 xmltodict
 websockets
 python-multipart
+redis

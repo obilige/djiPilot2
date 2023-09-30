@@ -1,21 +1,16 @@
 import psycopg2
-
-# 테스트용 환경변수 강제 설정 = 이후 환경변수에서 바로 접속하도록 설정할 것
-host = "app-db"
-port = 5432
-dbname = "mp_db"
-user = "admin"
-password = "visumy00"
+import os
+from uuid import uuidv4
 
 
 class postgres:
-    def __init__(self):
-        self.host = host
-        self.port = port
-        self.dbname = dbname
-        self.user = user
-        self.password = password
-
+    def __init__(self, **config):
+        self.host = config['host'] if config else "database"
+        self.port = config['port'] if config else 5432
+        self.dbname = config['dbname'] if config else "pilot2"
+        self.user = config['user'] if config else "user"
+        self.password = config['password'] if config else "1234"
+        self.emqx_addr = os.environ['EMQX_ADDRESS'] # 컨트롤러에서 접근 가능한 주소 줘야함. ReverseProxyServer:5432나 ReverseProxyServer:8756/database/ 생각 중
 
     def conn(self):
         try:
@@ -108,7 +103,7 @@ class postgres:
             text = f"SELECT {columns} FROM {table}"
             row = self.SELECT(text)
             result = {
-              "mqtt_addr": emqx,
+              "mqtt_addr": self.emqx_addr,
               "mqtt_username": "pilot",
               "mqtt_password": "pilot123",
               "username": row.username,

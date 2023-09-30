@@ -1,16 +1,18 @@
 from minio import Minio
+import os
 import urllib3
 
 
 class minio:
-    def __init__(self, server, port, access_key, secret_key, region, bucket):
-        # config
-        self.server = server
-        self.port = port
-        self.access_key = access_key
-        self.secret_key = secret_key
-        self.region = region
-        self.bucket = bucket
+    def __init__(self):
+        # access_key, secret_key 등 사전에 입력해줘야함.
+        # http://ip:9001로 접속해 acc_key, sec_key, region 등록 후 진행
+        self.server = os.environ['MINIO_HOST'] if os.environ['MINIO_HOST'] else 'minio'
+        self.port = os.environ['MINIO_PORT'] if os.environ['MINIO_PORT'] else 9000
+        self.access_key = os.environ['MINIO_ACC_KEY']
+        self.secret_key = os.environ['MINIO_SEC_KEY']
+        self.region = os.environ['MINIO_REGION']
+        self.bucket = os.environ['MINIO_BUCKET']
 
     def oss(self):
         try:

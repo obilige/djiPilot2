@@ -27,6 +27,9 @@ services:
       - "8080:8080"
     volumes:
       - ./front/app.js:/app/app.js
+      - ./front/front_page/package.json:/app/front_page/package.json
+      - ./front/front_page/tsconfig.json:/app/front_page/tsconfig.json
+      - ./front/front_page/vite.config.json:/app/front_page/vite.config.json
 
   # 개발중인 백엔드(main). 회사에선 nodejs로 개발. 현 포폴에선 python으로 개발.
   pilot2back:
@@ -55,6 +58,7 @@ services:
   emqx-broker:
     image: emqx:4.4
     expose:
+      - "8083"
       - "18083"
     environment:
       - EMQX_ALLOW_ANONYMOUS=true
@@ -63,6 +67,8 @@ services:
   redis:
     build: ./redis
     image: pilot2-redis
+    expose:
+      - "6379"
 
   # livestreaming service 위해 테스트 중인 rtmp - webrtc 변환 서버
   ome:
