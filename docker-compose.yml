@@ -1,4 +1,10 @@
 version: "3"
+
+# packaging할 network 찾기
+# networks:
+#   custom_network:
+#     external: true
+
 services:
   # 서비스 입장하는 입구 역할. 하나의 포트로 모든 서비스 연결할 수 있도록 만들어주기 위해 build
   ReverseProxyServer:
@@ -15,6 +21,8 @@ services:
       - ./reverseProxy/etc/nginx:/etc/nginx
       - ./reverseProxy/var/lib:/var/lib
     restart: "always"
+    # networks:
+    #   - custom_network
 
   # dji에서 pilot2 개발을 위해 제공하는 샘플 프론트 페이지 활용
   # 구조 변경
@@ -23,13 +31,15 @@ services:
     image: pilot2-front
     depends_on:
       - pilot2back
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     volumes:
       - ./front/app.js:/app/app.js
       - ./front/front_page/package.json:/app/front_page/package.json
       - ./front/front_page/tsconfig.json:/app/front_page/tsconfig.json
       - ./front/front_page/vite.config.json:/app/front_page/vite.config.json
+    # networks:
+    #   - custom_network
 
   # 개발중인 백엔드(main). 회사에선 nodejs로 개발. 현 포폴에선 python으로 개발.
   pilot2back:
@@ -43,6 +53,8 @@ services:
     volumes:
       - ./back/app:/code/app
     restart: "always"
+    # networks:
+    #   - custom_network
 
   # database: postgresSQL
   database:
@@ -52,6 +64,8 @@ services:
       - "5432:5432"
     volumes:
       - ~/storage/postgresql/data12.4:/var/lib/postgresql/data
+    # networks:
+    #   - custom_network
 
   # broker - client || subscribe - publish 개념으로 서버간 메세지 주고받는 프로토콜
   # 18083은 mqtt 관리자용 dashboard. 관리 편이성 위해 외부에 노출. 사용하지 않으면 ports 옵션은 지워줘도 무방함
@@ -62,6 +76,8 @@ services:
       - "18083"
     environment:
       - EMQX_ALLOW_ANONYMOUS=true
+    # networks:
+    #   - custom_network
 
   # websocket - mqtt data 담아둘 때 사용할 in-memory db
   redis:
@@ -84,14 +100,18 @@ services:
     environment:
       - OME_HOST_IP="Your IP ADDRESS"
     volumes:
-      - ./ome/ome_conf:/opt/ovenmediaengine/bin/origin_conf
+      - ./livestreaming/ome_conf:/opt/ovenmediaengine/bin/origin_conf
     command: /opt/ovenmediaengine/bin/OvenMediaEngine -c origin_conf
+    # networks:
+    #   - custom_network
 
   # livestreaming player
   ovenplayer:
     image: airensoft/ovenplayerdemo:latest
     ports:
       - 8090:80
+    # networks:
+    #   - custom_network
 
   # cloud storage(OSS)
   minio:
@@ -104,4 +124,6 @@ services:
       - "9000"
       - "9001"
     volumes:
-      - ./minio/data:/data
+      - ./oss/data:/data
+    # networks:
+    #   - custom_network
