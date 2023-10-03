@@ -1,6 +1,8 @@
 # pilot2 develop project
-- dji pilot2 sample을 python, nginx, redis 등을 이용해 리팩토링한 개인 작업물입니다.
+### 0. What is it?
 - Drone + Smart Agriculture Team 드론 솔루션입니다.
+- 사내 드론 솔루션에 pilot2를 패키징하기 위해 개발했습니다.
+- 스터디하고 싶은 내용을 추가하고자 코드, 언어, 프레임워크 등 변경했습니다.
 - 개발 완료가 아니라 개발 중인 코드들입니다.
 
 ### 1. Pilot2?
@@ -8,33 +10,36 @@
 - Mavic3, RTK300 등의 기종 구매 시, 컨트롤러에 탑재
 - pilot2 프로그램을 이용해 DJI에서 제공하는 기능을 자사 솔루션에 붙일 수 있음
 
-###  2. Outline
+###  2. Project Outline
 - 관제시스템 개발
 - 여러 대의 드론을 하나의 시스템에서 통제, 관찰할 수 있도록 만들 예정
-- 디렉토리: 
-    1. backend(python, 개발)
-    2. frontend(vue, 샘플)
-    3. oss(minio, docker hub)
-    4. livestreaming(ome, docker hub)
-    5. database(postgreSQL, docker hub)
-    6. redis(redis, docker hub)
-    7. reverseProxy(nginx, docker hub)
+- 디렉토리
+```text
+1. backend(python, 개발)
+2. frontend(vue, 샘플)
+3. oss(minio, docker hub)
+4. livestreaming(ome, docker hub)
+5. database(postgreSQL, docker hub)
+6. redis(redis, docker hub)
+7. reverseProxy(nginx, docker hub)
+```
 - 구성:
-    ```text
-    Drone --------------+-------------> pilot2 with js-bridge+
-    pilot2 cloud <-------------------------------------------|  
-                        |                                    |
-    nginx:8756 ---------+-----> frontend:8080 ---------------+
-                        |       http:// & ws://              | ws://
-                        |-----> backend:6789                 | M 8
-                        |                                    | Q 0
-                        +-----> postgres:5432                | T 8
-                        +-----> minio:9000                   | T 3
-                        +-----> ome:1935, 3333, 3478         | :
-                        +-----> redis:6379                   |
-    --------------------|------------------------------------+
-    ```
+```text
+Drone --------------+-------------> pilot2 with js-bridge+
+pilot2 cloud <-------------------------------------------|  
+                    |                                    |
+nginx:8756 ---------+-----> frontend:8080 ---------------+
+                    |       http:// & ws://              | ws://
+                    |-----> backend:6789                 | M 8
+                    |                                    | Q 0
+                    +-----> postgres:5432                | T 8
+                    +-----> minio:9000                   | T 3
+                    +-----> ome:1935, 3333, 3478         | :
+                    +-----> redis:6379                   |
+--------------------|------------------------------------+
+```
 - url path info
+```text
     1. front: http://{host}:8756/front/
     2. back: http://{host}:8756/back/
     3. database: http://{host}:8756/database/ || http://{host}:5432 (고민중)
@@ -42,13 +47,15 @@
     5. mqtt(EMQX) dashboard: http://{host}:18083
     6. mqtt(ws): ws://{host}:8756/mqtt
     7. OME: (고민중)
-
+```
 - pilot2(외부)에서 접근이 가능해야하는 컨테이너 목록
+```text
     1. front
     2. backend: ws과 http로 접근 가능해야함
     3. OME: webrtc와 rtmp 서버 접근 가능해야한다.
     4. mqtt
     5. (최종목표) nginx로 proxy 타고 모두 외부에서 접근 가능하도록 만들기
+```
 
 ### 3. How to Start?
 - Clone Rep
