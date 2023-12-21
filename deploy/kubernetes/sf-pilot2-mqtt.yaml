@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sf-pilot2-emqx
+spec:
+  replicas: 3
+  serviceName: emqx
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: pilot2-emqx
+  template:
+    metadata:
+      labels:
+        app: pilot2-emqx
+    spec:
+      containers:
+      - name: container-pilot2-emqx
+        image: localhost:1234/pilot2-emqx
+        ports:
+        - containerPort: 8083

@@ -1,6 +1,6 @@
 import psycopg2
 import os
-from uuid import uuidv4
+from uuid import uuid4
 
 
 class postgres:
@@ -210,7 +210,7 @@ class postgres:
         try:
             json = {
                 "name": filename,
-                "wayline_id": uuidv4(), #파이썬 uuidv4 생성 라이브러리 찾기
+                "wayline_id": uuid4(), #파이썬 uuidv4 생성 라이브러리 찾기
                 "template_types": template_id,
                 "object_key": object_key}
             text = f"""UPDATE waypoint_plan SET 

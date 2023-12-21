@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-pilot2-front
+  annotations:
+    kubernetes-deploy-test: first
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pilot2-front
+  progressDeadlineSeconds: 600 #600초동안 업데이트 진행하지 못하면 실패처리 후 되돌리겠다.
+  revisionHistoryLimit: 10 #롤링업데이트 후 남아있는 버젼을 10개까지만 남겨둔다.
+  strategy:
+    rollingUpdate:
+      maxSurge: 25
+      maxUnavailable: 25
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: pilot2-front
+    spec:
+      containers:
+      - name: container-pilot2-front
+        image: localhost:1234/pilot2-front
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080

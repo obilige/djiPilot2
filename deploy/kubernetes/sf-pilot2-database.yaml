@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sf-pilot2-database
+spec:
+  replicas: 3
+  serviceName: database
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: pilot2-database
+  template:
+    metadata:
+      labels:
+        app: pilot2-database
+    spec:
+      containers:
+      - name: container-pilot2-database
+        image: localhost:1234/pilot2-database
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgresDB
+    volumes:
+      - name: postgresDB
+        persistentVolumeClaim:
+            claimName: pvc-local-db

@@ -9,16 +9,16 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-config = {
-    'host': os.environ['OSS_HOST'],
-    'port': os.environ['OSS_PORT'],
-    'bucket': os.environ['BUCKET'],
-    'accesskey': os.environ['ACC_KEY'], 
-    'secretkey': os.environ['SEC_KEY'],
-    'region': os.environ['MINIO_REGION'],
-    'dir': 'pilot2',
-    'provider': 'minio',
-}
+# config = {
+#     'host': os.environ['OSS_HOST'],
+#     'port': os.environ['OSS_PORT'],
+#     'bucket': os.environ['BUCKET'],
+#     'accesskey': os.environ['ACC_KEY'], 
+#     'secretkey': os.environ['SEC_KEY'],
+#     'region': os.environ['MINIO_REGION'],
+#     'dir': 'pilot2',
+#     'provider': 'minio',
+# }
 
 @router.post('/workspaces/{workspace_id}/sts')
 def remote_oss_info(workspace_id, config):

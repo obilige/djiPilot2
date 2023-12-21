@@ -1,0 +1,1 @@
+kubectl create secret docker-registry regcred --docker-server=localhost:1234

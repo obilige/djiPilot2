@@ -8,7 +8,7 @@ version: "3"
 services:
   # 서비스 입장하는 입구 역할. 하나의 포트로 모든 서비스 연결할 수 있도록 만들어주기 위해 build
   ReverseProxyServer:
-    image: nginx:stable
+    image: localhost:1234/pilot2-nginx-proxy
     depends_on:
       - pilot2front
     ports:
@@ -16,10 +16,6 @@ services:
       - "443:443"
     environment:
       - TZ=Asia/Seoul
-    volumes:
-      - /etc/localtime:/etc/localtime
-      - ./reverseProxy/etc/nginx:/etc/nginx
-      - ./reverseProxy/var/lib:/var/lib
     restart: "always"
     # networks:
     #   - custom_network
@@ -28,23 +24,18 @@ services:
   # 구조 변경
   pilot2front:
     build: ./front
-    image: pilot2-front
+    image: localhost:1234/pilot2-front
     depends_on:
       - pilot2back
     expose:
       - "8080"
-    volumes:
-      - ./front/app.js:/app/app.js
-      - ./front/front_page/package.json:/app/front_page/package.json
-      - ./front/front_page/tsconfig.json:/app/front_page/tsconfig.json
-      - ./front/front_page/vite.config.json:/app/front_page/vite.config.json
     # networks:
     #   - custom_network
 
   # 개발중인 백엔드(main). 회사에선 nodejs로 개발. 현 포폴에선 python으로 개발.
   pilot2back:
     build: ./back
-    image: pilot2-back
+    image: localhost:1234/pilot2-back
     depends_on:
       - database
       - emqx-broker
@@ -59,7 +50,7 @@ services:
   # database: postgresSQL
   database:
     build: ./database
-    image: pilot2-db
+    image: localhost:1234/pilot2-database
     ports:
       - "5432:5432"
     volumes:
@@ -73,8 +64,6 @@ services:
     image: emqx:5
     environment:
       - EMQX_ALLOW_ANONYMOUS=true
-    expose:
-      - "8083"
     # networks:
     #   - custom_network
 
@@ -87,7 +76,7 @@ services:
 
   # livestreaming service 위해 테스트 중인 rtmp - webrtc 변환 서버
   ome:
-    image: airensoft/ovenmediaengine:latest
+    image: localhost:1234/pilot2-ome
     # 1935: rtmp / 3333: webrtc / 3478: for getting out webrtc
     ports:
       - 1935:1935

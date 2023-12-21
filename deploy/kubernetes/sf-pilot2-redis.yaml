@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sf-pilot2-redis
+spec:
+  replicas: 3
+  serviceName: redis
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: pilot2-redis
+  template:
+    metadata:
+      labels:
+        app: pilot2-redis
+    spec:
+      containers:
+      - name: container-pilot2-redis
+        image: redis
+        ports:
+        - containerPort: 6379
