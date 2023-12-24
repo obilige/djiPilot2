@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-pilot2-minio
+spec:
+  selector:
+    app: pilot2-minio
+  ports:
+    - name: Internal
+      protocol: TCP
+      port: 9000
+      targetPort: 9000
+    - name: Webpage
+      protocol: TCP
+      port: 9001
+      targetPort: 9001
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sf-pilot2-minio
+spec:
+  replicas: 3
+  serviceName: minio
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: pilot2-minio
+  template:
+    metadata:
+      labels:
+        app: pilot2-minio
+    spec:
+      containers:
+      - name: container-pilot2-minio
+        image: minio/minio
+        ports:
+        - containerPort: 9000
+        - containerPort: 9001

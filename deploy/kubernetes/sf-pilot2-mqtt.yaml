@@ -1,3 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-pilot2-database
+spec:
+  selector:
+    app: pilot2-database
+  ports:
+    - name: websocket
+      protocol: TCP
+      port: 8083
+      targetPort: 8083
+    - name: dashboard
+      protocol: TCP
+      port: 18083
+      targetPort: 18083
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -18,4 +35,5 @@ spec:
       - name: container-pilot2-emqx
         image: localhost:1234/pilot2-emqx
         ports:
-        - containerPort: 8083
+        - containerPort: 8083 #ws 위에서 동작하는! 뒤에 /mqtt가 붙어야함
+        - containerPort: 18083 #대시보드

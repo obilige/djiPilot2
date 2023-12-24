@@ -1,10 +1,5 @@
 version: "3"
 
-# packaging할 network 찾기
-# networks:
-#   custom_network:
-#     external: true
-
 services:
   # 서비스 입장하는 입구 역할. 하나의 포트로 모든 서비스 연결할 수 있도록 만들어주기 위해 build
   ReverseProxyServer:
@@ -16,9 +11,6 @@ services:
       - "443:443"
     environment:
       - TZ=Asia/Seoul
-    restart: "always"
-    # networks:
-    #   - custom_network
 
   # dji에서 pilot2 개발을 위해 제공하는 샘플 프론트 페이지 활용
   # 구조 변경
@@ -29,8 +21,6 @@ services:
       - pilot2back
     expose:
       - "8080"
-    # networks:
-    #   - custom_network
 
   # 개발중인 백엔드(main). 회사에선 nodejs로 개발. 현 포폴에선 python으로 개발.
   pilot2back:
@@ -41,11 +31,6 @@ services:
       - emqx-broker
     expose:
       - "6789"
-    volumes:
-      - ./back/app:/code/app
-    # restart: "always"
-    # networks:
-    #   - custom_network
 
   # database: postgresSQL
   database:
@@ -87,17 +72,12 @@ services:
       # - 10000-10009:10000-10009/udp
     environment:
       - OME_HOST_IP="Your IP ADDRESS"
-    volumes:
-      - ./livestreaming/ome_conf:/opt/ovenmediaengine/bin/origin_conf
-    command: /opt/ovenmediaengine/bin/OvenMediaEngine -c origin_conf
-    # networks:
-    #   - custom_network
 
   # livestreaming player
   ovenplayer:
     image: airensoft/ovenplayerdemo:latest
-    ports:
-      - 8090:80
+    expose:
+      - "80"
     # networks:
     #   - custom_network
 
@@ -110,27 +90,6 @@ services:
       MINIO_ROOT_PASSWORD: visumy00
     expose:
       - "9000"
-      - "9001"
+      - "9001" # manage web-page
     volumes:
       - ./oss/data:/data
-    # networks:
-    #   - custom_network
-  
-  # for CI/CD
-  jenkins:
-    image: jenkins/jenkins
-    ports:
-      - "8080:8080"
-    environment:
-      REGISTRY_IP: registry
-      REGISTRY_PORT: 5000
-    # networks:
-    #   - custom_network
-
-  
-  registry:
-    image: registry:latest
-    ports:
-    - "1234:5000"
-    # networks:
-    #   - custom_network

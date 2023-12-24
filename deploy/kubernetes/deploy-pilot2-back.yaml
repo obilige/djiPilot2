@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-pilot2-back
+spec:
+  selector:
+    app: pilot2-back
+  ports:
+    - protocol: TCP
+      port: 6789
+      targetPort: 6789
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,7 +17,7 @@ metadata:
   annotations:
     kubernetes-deploy-test: first
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
       app: pilot2-back
