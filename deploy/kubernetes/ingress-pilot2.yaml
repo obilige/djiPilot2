@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-pilot2
+spec:
+  rules:
+  - host: 127.0.0.1
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service-pilot2-front
+            port:
+              number: 8080
+      - path: /back
+        pathType: Prefix
+        backend:
+          service:
+            name: service-pilot2-back
+            port:
+              number: 6789
+      - path: /mqtt
+        pathType: Prefix
+        backend:
+          service:
+            name: service-pilot2-mqtt
+            port:
+              number: 8083
+  ingressClassName: nginx
+  nginx.ingress.kubernetes.io/websocket-services: "service-pilot2-mqtt"
