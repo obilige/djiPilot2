@@ -55,3 +55,12 @@ spec:
         - containerPort: 1935
         - containerPort: 3333
         - containerPort: 3478
+        envFrom:
+        - name: pilot2-key-secret
+          valueFrom:
+            configMapKeyRef:
+              name: pilot2-config
+        - name: pilot2-key-secret
+          valueFrom:
+            secretKeyRef:
+              name: pilot2-config

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-pilot2-mqtt
+  name: service-pilot2-emqx
 spec:
   selector:
-    app: pilot2-mqtt
+    app: pilot2-emqx
   ports:
     - name: websocket
       protocol: TCP
