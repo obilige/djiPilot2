@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: pilot2-config
 data:
-  PGHOST: my-mysql-service.default.svc.cluster.local 
+  PGHOST: service-pilot2-database.default.svc.cluster.local 
   PGPORT: "5432"
   PGDATABASE: database
   OME_HOST: "211.189.132.21"
