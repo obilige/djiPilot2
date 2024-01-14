@@ -6,7 +6,7 @@ data:
   PGHOST: service-pilot2-database.default.svc.cluster.local 
   PGPORT: "5432"
   PGDATABASE: database
-  OME_HOST: "211.189.132.21"
+  OME_HOST: "localhost"
   OME_RTMP_PROV_PORT: "1935"
   OME_WEBRTC_SIGNALLING_PORT: "3333"
   OME_WEBRTC_TCP_RELAY_PORT: "3478"
